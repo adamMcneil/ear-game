@@ -1,21 +1,21 @@
 <script>
-	import { createEventDispatcher, onDestroy } from 'svelte';
+	import { createEventDispatcher, onDestroy } from "svelte";
 
 	const dispatch = createEventDispatcher();
-	const close = () => dispatch('close');
+	const close = () => dispatch("close");
 
 	let modal;
 
-	const handle_keydown = e => {
-		if (e.key === 'Escape') {
+	const handle_keydown = (e) => {
+		if (e.key === "Escape") {
 			close();
 			return;
 		}
 
-		if (e.key === 'Tab') {
+		if (e.key === "Tab") {
 			// Trap focus
-			const nodes = modal.querySelectorAll('*');
-			const tabbable = Array.from(nodes).filter(n => n.tabIndex >= 0);
+			const nodes = modal.querySelectorAll("*");
+			const tabbable = Array.from(nodes).filter((n) => n.tabIndex >= 0);
 
 			let index = tabbable.indexOf(document.activeElement);
 			if (index === -1 && e.shiftKey) index = 0;
@@ -28,7 +28,8 @@
 		}
 	};
 
-	const previouslyFocused = typeof document !== 'undefined' && document.activeElement;
+	const previouslyFocused =
+		typeof document !== "undefined" && document.activeElement;
 
 	if (previouslyFocused) {
 		onDestroy(() => {
@@ -37,7 +38,7 @@
 	}
 </script>
 
-<svelte:window on:keydown={handle_keydown}/>
+<svelte:window on:keydown={handle_keydown} />
 
 <div class="modal-background" on:click={close}></div>
 
@@ -56,8 +57,8 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		background: rgba(0,0,0,0.3);
-    z-index: 3;
+		background: rgba(0, 0, 0, 0.3);
+		z-index: 3;
 	}
 
 	.modal {
@@ -68,15 +69,15 @@
 		max-width: 32em;
 		max-height: calc(100vh - 4em);
 		overflow: auto;
-		transform: translate(-50%,-50%);
+		transform: translate(-50%, -50%);
 		padding: 1em;
 		border-radius: 0.2em;
 		background: white;
-    z-index: 4;
+		z-index: 4;
 	}
 
 	button {
 		display: block;
-    float: right;
+		float: right;
 	}
 </style>

@@ -4,24 +4,24 @@
     import { octaves, verbose } from "./stores";
 </script>
 
-
-
 <svelte:head>
     <title>Svelte Piano</title>
 </svelte:head>
 
 <div class="nav">
-    <h1><a href="https://github.com/oscarhermoso/svelte-piano">Svelte Piano</a></h1>
-    <Settings/>
+    <h1>
+        <a href="https://github.com/oscarhermoso/svelte-piano">Svelte Piano</a>
+    </h1>
+    <Settings />
 </div>
 
 {#key $octaves}
-    <Keyboard octaves={$octaves} verbose={$verbose}/>
+    <Keyboard octaves={$octaves} verbose={$verbose} />
 {/key}
 
 <style>
     .nav {
-        display:flex;
+        display: flex;
         justify-content: space-between;
         align-items: center;
     }

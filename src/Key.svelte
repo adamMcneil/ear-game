@@ -28,7 +28,8 @@
     class:accidental={!isNatural}
     class:natural={isNatural}
     class:pressed
-    style="--width: {keyWidth - keyWidth * 0.47 * !isNatural}px; transform: translate({bias}px);"
+    style="--width: {keyWidth -
+        keyWidth * 0.47 * !isNatural}px; transform: translate({bias}px);"
     draggable="false"
     on:mousedown|preventDefault={keyPressed}
     on:mouseup|preventDefault={keyReleased}
@@ -66,13 +67,13 @@
     }
     .accidental:not(.pressed) {
         background: black;
-        transition: background-color 1.0s ease;
+        transition: background-color 1s ease;
     }
     .natural.pressed {
         background: cyan;
     }
     .natural:not(.pressed) {
         background: white;
-        transition: background-color 1.0s ease;
+        transition: background-color 1s ease;
     }
 </style>
