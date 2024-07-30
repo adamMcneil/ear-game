@@ -1,4 +1,4 @@
 import { writable, Writable } from "svelte/store";
 
-export const octaves = writable(1);
-export const verbose = writable(false);
+export const octaves = writable(2);
+export const verbose = writable(true);

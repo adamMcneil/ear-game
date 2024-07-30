@@ -67,13 +67,13 @@
     }
     .accidental:not(.pressed) {
         background: black;
-        transition: background-color 1s ease;
+        transition: background-color 0.5s ease;
     }
     .natural.pressed {
         background: cyan;
     }
     .natural:not(.pressed) {
         background: white;
-        transition: background-color 1s ease;
+        transition: background-color 0.5s ease;
     }
 </style>

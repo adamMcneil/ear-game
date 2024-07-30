@@ -18,12 +18,16 @@
 
     let logs = [];
 
-    function noteOn(note: number, velocity: number = 0) {
+    function noteOn(note: number, velocity: number = 127) {
         logs = [`Note ${note} was pressed!`, ...logs];
+
+        MIDI.noteOn(0, note, velocity, 0);
     }
 
     function noteOff(note: number) {
         logs = [`Note ${note} was released!`, ...logs];
+
+        MIDI.noteOff(0, note, 0);
     }
 
     function listInputsAndOutputs(midiAccess: WebMidi.MIDIAccess) {
@@ -97,6 +101,16 @@
     }
 
     onMount(async () => {
+        MIDI.loadPlugin({
+            soundfontUrl: "./soundfont/",
+            instrument: "acoustic_grand_piano",
+            onprogress: function (state, progress) {
+                console.log(state, progress);
+            },
+            onsuccess: function () {
+                MIDI.setVolume(0, 127);
+            },
+        });
         try {
             let midiAccess = await navigator.requestMIDIAccess();
             console.log("MIDI ready!");
