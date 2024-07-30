@@ -10,7 +10,7 @@
 
 <div class="nav">
     <h1>
-        <a href="https://github.com/oscarhermoso/svelte-piano">Svelte Piano</a>
+        <a href="https://github.com/lukemcneil/ear-game">Ear Game</a>
     </h1>
     <Settings />
 </div>
