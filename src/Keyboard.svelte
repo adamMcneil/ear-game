@@ -7,8 +7,8 @@
     const modulo = octaves * 12;
 
     import Key from "./Key.svelte";
-
     import { onMount } from "svelte";
+    import MIDI from "midi.js";
 
     let keys;
 
