@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head>
-    <title>Svelte Piano</title>
+    <title>Ear Game</title>
 </svelte:head>
 
 <div class="nav">
