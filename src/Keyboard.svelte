@@ -4,30 +4,46 @@
     export let keysPressed = [];
     export let verbose;
 
-    const modulo = octaves * 12;
-
     import Key from "./Key.svelte";
     import { onMount } from "svelte";
     import MIDI from "midi.js";
+    import { Chord, getNthNoteInKey, Inversion, notesInChord } from "./chords";
 
-    let keys;
+    let notes;
 
-    $: keys = [...Array(octaves * 12 + 1).keys()].map(
+    let start = 60;
+
+    $: notes = [...Array(octaves * 12 + 1).keys()].map(
         (i) => i + (middleC - Math.floor(octaves / 2) * 12),
     );
 
     let logs = [];
 
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    function midiToKey(note: number) {
+        let octave = Math.floor(note / (12 * octaves));
+        let offset = note % (12 * octaves);
+        if (octave % (octaves + 1) == 0 && offset == 0) {
+            // need this because we add in 1 extra note of the one we start on
+            return 12 * octaves;
+        } else {
+            return offset;
+        }
+    }
+
     function noteOn(note: number, velocity: number = 127) {
         logs = [`Note ${note} was pressed!`, ...logs];
-
         MIDI.noteOn(0, note, velocity, 0);
+        let key = midiToKey(note);
+        keyBindings[key]?.playKey();
     }
 
     function noteOff(note: number) {
         logs = [`Note ${note} was released!`, ...logs];
-
         MIDI.noteOff(0, note, 0);
+        let key = midiToKey(note);
+        keyBindings[key]?.stopPlayingKey();
     }
 
     function listInputsAndOutputs(midiAccess: WebMidi.MIDIAccess) {
@@ -82,19 +98,19 @@
         }
 
         const command = event.data[0];
-        const key = event.data[1] % modulo;
+        const note = keyBindings[midiToKey(event.data[1])]?.getNote();
         const velocity = event.data.length > 2 ? event.data[2] : 0; // a velocity value might not be included with a noteOff command
 
         switch (command) {
             case 144: // noteOn
                 if (velocity > 0) {
-                    keyBindings[key]?.keyPressed(key);
+                    noteOn(note);
                 } else {
-                    keyBindings[key]?.keyReleased(key);
+                    noteOff(note);
                 }
                 break;
             case 128: // noteOff
-                keyBindings[key]?.keyReleased(key);
+                noteOff(note);
                 break;
             // we could easily expand this switch statement to cover other types of commands such as controllers or sysex
         }
@@ -123,28 +139,105 @@
         }
     });
 
-    let keyBindings = {};
+    let keyBindings: Record<number, Key> = {};
 
     let innerWidth: number;
     $: keyWidth = Math.min((innerWidth - 36 / octaves) / (octaves * 8), 56);
+
+    function chordOn(
+        start: number,
+        type: Chord = Chord.Major,
+        inversion: Inversion = Inversion.Root,
+    ) {
+        chordOnOrOff(start, type, true, inversion);
+    }
+
+    function chordOff(
+        start: number,
+        type: Chord = Chord.Major,
+        inversion: Inversion = Inversion.Root,
+    ) {
+        chordOnOrOff(start, type, false, inversion);
+    }
+
+    function chordOnOrOff(
+        start: number,
+        chordType: Chord,
+        play: boolean,
+        inversion: Inversion,
+    ) {
+        let chordNotes = notesInChord(start, chordType, inversion);
+        chordNotes.forEach((note) => {
+            if (play) {
+                noteOn(note);
+            } else {
+                noteOff(note);
+            }
+        });
+    }
 </script>
 
 <svelte:window bind:innerWidth />
 
 <div class="keyboard">
     <div>
-        {#each keys as note}
+        {#each notes as note}
             <Key
                 noteNum={note}
                 {keyWidth}
-                on:noteon={({ detail }) => noteOn(detail)}
-                on:noteoff={({ detail }) => noteOff(detail)}
+                on:notepressed={({ detail }) => noteOn(detail)}
+                on:notereleased={({ detail }) => noteOff(detail)}
                 pressed={keysPressed.includes(note)}
-                bind:this={keyBindings[note % modulo]}
+                bind:this={keyBindings[midiToKey(note)]}
             />
         {/each}
     </div>
 </div>
+
+<label>
+    Root Note
+    <input
+        type="number"
+        bind:value={start}
+        min={notes[0]}
+        max={notes[notes.length - 1]}
+    />
+    <input
+        type="range"
+        bind:value={start}
+        min={notes[0]}
+        max={notes[notes.length - 1]}
+    />
+</label>
+
+<button
+    on:mousedown={async () => {
+        let hold = 500;
+        let pause = 100;
+        let chords = [
+            [0, Chord.Major, Inversion.Root],
+            [5 - 12, Chord.Major, Inversion.Second],
+            [7 - 12, Chord.Major, Inversion.First],
+            [0, Chord.Major, Inversion.Root],
+        ];
+        for (const [offset, chordType, inversion] of chords) {
+            chordOn(start + offset, chordType, inversion);
+            await sleep(hold);
+            chordOff(start + offset, chordType, inversion);
+            await sleep(pause);
+        }
+
+        await sleep(hold);
+        const n = Math.floor(Math.random() * 8);
+        console.log(n + 1);
+        let note = getNthNoteInKey(start, n);
+        MIDI.noteOn(0, note, 127, 0);
+        await sleep(hold);
+        MIDI.noteOff(0, note, 0);
+    }}
+>
+    Guess Note
+</button>
 
 {#if verbose}
     {#each logs as log}

@@ -12,14 +12,21 @@
         if ([1, 6].includes(noteNum % 12)) bias = -keyWidth / 12;
         else if ([3, 10].includes(noteNum % 12)) bias = keyWidth / 12;
     }
-    export function keyPressed(key) {
+    export function getNote() {
+        return noteNum;
+    }
+    function keyPressed() {
+        dispatch("notepressed", noteNum);
+    }
+    function keyReleased() {
+        dispatch("notereleased", noteNum);
+    }
+    export function playKey() {
         if (pressed) return;
-        dispatch("noteon", noteNum);
         pressed = true;
     }
-    export function keyReleased(key) {
+    export function stopPlayingKey() {
         if (!pressed) return;
-        dispatch("noteoff", noteNum);
         pressed = false;
     }
 </script>
