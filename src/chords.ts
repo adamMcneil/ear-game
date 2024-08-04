@@ -77,11 +77,24 @@ export enum Inversion {
     Second,
 }
 
+const majorKeyOffsets = [0, 2, 4, 5, 7, 9, 11, 12];
+
 function getNotesInKey(root: number) {
-    return [0, 2, 4, 5, 7, 9, 11, 12].map((x) => x + root);
+    return majorKeyOffsets.map((x) => x + root);
 }
 
 export function getNthNoteInKey(root: number, n: number) {
     let notes = getNotesInKey(root);
     return notes[n];
+}
+
+export function noteToPositionInKey(root: number, note: number) {
+    let offset = (note - root) % 12;
+    if (offset < 0) offset += 12;
+    const positionInKey = majorKeyOffsets.indexOf(offset)
+    if (positionInKey >= 0) {
+        return positionInKey + 1;
+    } else {
+        return null;
+    }
 }

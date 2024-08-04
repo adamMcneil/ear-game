@@ -7,11 +7,18 @@
     import Key from "./Key.svelte";
     import { onMount } from "svelte";
     import MIDI from "midi.js";
-    import { Chord, getNthNoteInKey, Inversion, notesInChord } from "./chords";
+    import {
+        Chord,
+        getNthNoteInKey,
+        Inversion,
+        notesInChord,
+        noteToPositionInKey,
+    } from "./chords";
 
     let notes;
 
-    let start = 60;
+    let rootNote = 60;
+    let positionInKey;
 
     $: notes = [...Array(octaves * 12 + 1).keys()].map(
         (i) => i + (middleC - Math.floor(octaves / 2) * 12),
@@ -34,6 +41,15 @@
 
     function noteOn(note: number, velocity: number = 127) {
         logs = [`Note ${note} was pressed!`, ...logs];
+        let positionInKeyPressed = noteToPositionInKey(rootNote, note);
+        if (positionInKey && positionInKeyPressed) {
+            if (positionInKeyPressed === positionInKey) {
+                keyBindings[midiToKey(note)]?.markCorrect();
+                positionInKey = undefined;
+            } else {
+                keyBindings[midiToKey(note)]?.markWrong();
+            }
+        }
         MIDI.noteOn(0, note, velocity, 0);
         let key = midiToKey(note);
         keyBindings[key]?.playKey();
@@ -189,6 +205,7 @@
                 on:notereleased={({ detail }) => noteOff(detail)}
                 pressed={keysPressed.includes(note)}
                 bind:this={keyBindings[midiToKey(note)]}
+                numberInKey={noteToPositionInKey(rootNote, note)}
             />
         {/each}
     </div>
@@ -198,13 +215,13 @@
     Root Note
     <input
         type="number"
-        bind:value={start}
+        bind:value={rootNote}
         min={notes[0]}
         max={notes[notes.length - 1]}
     />
     <input
         type="range"
-        bind:value={start}
+        bind:value={rootNote}
         min={notes[0]}
         max={notes[notes.length - 1]}
     />
@@ -212,6 +229,7 @@
 
 <button
     on:mousedown={async () => {
+        positionInKey = undefined;
         let hold = 500;
         let pause = 100;
         let chords = [
@@ -221,16 +239,16 @@
             [0, Chord.Major, Inversion.Root],
         ];
         for (const [offset, chordType, inversion] of chords) {
-            chordOn(start + offset, chordType, inversion);
+            chordOn(rootNote + offset, chordType, inversion);
             await sleep(hold);
-            chordOff(start + offset, chordType, inversion);
+            chordOff(rootNote + offset, chordType, inversion);
             await sleep(pause);
         }
 
         await sleep(hold);
         const n = Math.floor(Math.random() * 8);
-        console.log(n + 1);
-        let note = getNthNoteInKey(start, n);
+        positionInKey = (n + 1) % 7;
+        let note = getNthNoteInKey(rootNote, n);
         MIDI.noteOn(0, note, 127, 0);
         await sleep(hold);
         MIDI.noteOff(0, note, 0);
