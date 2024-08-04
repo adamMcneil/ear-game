@@ -247,7 +247,10 @@
 
         await sleep(hold);
         const n = Math.floor(Math.random() * 8);
-        positionInKey = (n + 1) % 7;
+        positionInKey = n + 1;
+        if (positionInKey === 8) {
+            positionInKey = 1;
+        }
         let note = getNthNoteInKey(rootNote, n);
         MIDI.noteOn(0, note, 127, 0);
         await sleep(hold);
