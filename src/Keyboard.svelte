@@ -1,6 +1,5 @@
 <script lang="ts">
     export let octaves = 2;
-    export let middleC = 60;
     export let keysPressed = [];
     export let verbose;
 
@@ -21,17 +20,28 @@
     let positionInKey;
     let playable = true;
 
-    $: notes = [...Array(octaves * 12 + 1).keys()].map(
-        (i) => i + (middleC - Math.floor(octaves / 2) * 12),
-    );
+    $: {
+        let start = 0;
+        let finish = octaves * 12 + 1;
+        const isRootNatural = ![1, 3, 6, 8, 10].includes(rootNote % 12);
+        if (!isRootNatural) {
+            start -= 1;
+            finish += 1;
+        }
+        const arr = Array.from({ length: finish - start }, (_, a) => a + start);
+        notes = arr.map((i) => i + (rootNote - Math.floor(octaves / 2) * 12));
+    }
 
     let logs = [];
 
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     function midiToKey(note: number) {
+        if (note < notes[0]) {
+            note += 12 * octaves;
+        }
         let octave = Math.floor(note / (12 * octaves));
-        let offset = note % (12 * octaves);
+        let offset = (note - rootNote) % (12 * octaves);
         if (octave % (octaves + 1) == 0 && offset == 0) {
             // need this because we add in 1 extra note of the one we start on
             return 12 * octaves;
@@ -206,36 +216,28 @@
 
 <svelte:window bind:innerWidth />
 
-<div class="keyboard">
-    <div>
-        {#each notes as note}
-            <Key
-                noteNum={note}
-                {keyWidth}
-                on:notepressed={({ detail }) => noteOn(detail)}
-                on:notereleased={({ detail }) => noteOff(detail)}
-                pressed={keysPressed.includes(note)}
-                bind:this={keyBindings[midiToKey(note)]}
-                numberInKey={noteToPositionInKey(rootNote, note)}
-            />
-        {/each}
+{#key rootNote}
+    <div class="keyboard">
+        <div>
+            {#each notes as note}
+                <Key
+                    noteNum={note}
+                    {keyWidth}
+                    on:notepressed={({ detail }) => noteOn(detail)}
+                    on:notereleased={({ detail }) => noteOff(detail)}
+                    pressed={keysPressed.includes(note)}
+                    bind:this={keyBindings[midiToKey(note)]}
+                    numberInKey={noteToPositionInKey(rootNote, note)}
+                />
+            {/each}
+        </div>
     </div>
-</div>
+{/key}
 
 <label>
     Root Note
-    <input
-        type="number"
-        bind:value={rootNote}
-        min={notes[0]}
-        max={notes[notes.length - 1]}
-    />
-    <input
-        type="range"
-        bind:value={rootNote}
-        min={notes[0]}
-        max={notes[notes.length - 1]}
-    />
+    <input type="number" bind:value={rootNote} min="48" max="72" />
+    <input type="range" bind:value={rootNote} min="48" max="72" />
 </label>
 
 <button
