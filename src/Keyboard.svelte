@@ -19,6 +19,7 @@
 
     let rootNote = 60;
     let positionInKey;
+    let playable = true;
 
     $: notes = [...Array(octaves * 12 + 1).keys()].map(
         (i) => i + (middleC - Math.floor(octaves / 2) * 12),
@@ -39,10 +40,20 @@
         }
     }
 
-    function noteOn(note: number, velocity: number = 127) {
+    function noteOn(
+        note: number,
+        velocity: number = 127,
+        checkPlayable = true,
+    ) {
+        if (checkPlayable && !playable) {
+            return;
+        }
         logs = [`Note ${note} was pressed!`, ...logs];
         let positionInKeyPressed = noteToPositionInKey(rootNote, note);
-        if (positionInKey && positionInKeyPressed) {
+        if (positionInKey) {
+            if (!positionInKeyPressed) {
+                return;
+            }
             if (positionInKeyPressed === positionInKey) {
                 keyBindings[midiToKey(note)]?.markCorrect();
                 positionInKey = undefined;
@@ -185,7 +196,7 @@
         let chordNotes = notesInChord(start, chordType, inversion);
         chordNotes.forEach((note) => {
             if (play) {
-                noteOn(note);
+                noteOn(note, 127, false);
             } else {
                 noteOff(note);
             }
@@ -229,6 +240,7 @@
 
 <button
     on:mousedown={async () => {
+        playable = false;
         positionInKey = undefined;
         let hold = 500;
         let pause = 100;
@@ -255,6 +267,7 @@
         MIDI.noteOn(0, note, 127, 0);
         await sleep(hold);
         MIDI.noteOff(0, note, 0);
+        playable = true;
     }}
 >
     Guess Note
