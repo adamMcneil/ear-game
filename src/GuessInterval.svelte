@@ -214,6 +214,12 @@
 
 <svelte:window bind:innerWidth />
 
+<label>
+    Root Note
+    <input type="number" bind:value={rootNote} min="48" max="72" />
+    <input type="range" bind:value={rootNote} min="48" max="72" />
+</label>
+
 {#key rootNote}
     <div class="keyboard">
         <div>
@@ -231,12 +237,6 @@
         </div>
     </div>
 {/key}
-
-<label>
-    Root Note
-    <input type="number" bind:value={rootNote} min="48" max="72" />
-    <input type="range" bind:value={rootNote} min="48" max="72" />
-</label>
 
 {#if !positionInKey && playable}
     <button

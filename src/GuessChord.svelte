@@ -8,7 +8,6 @@
     import MIDI from "midi.js";
     import {
         Chord,
-        getNthNoteInKey,
         Inversion,
         notesInChord,
         noteToPositionInKey,
@@ -16,10 +15,15 @@
 
     let notes;
 
+    let minRootNote = 60;
+    let maxRootRote = 72;
     let rootNote = 60;
-    let positionInKey;
-    let pickedN;
-    let playable = true;
+    let chordTypeToGuess = null;
+    let playing = false;
+
+    const chordTypes = Object.values(Chord).filter(
+        (value) => typeof value === "string",
+    );
 
     $: {
         let start = 0;
@@ -54,27 +58,22 @@
     function noteOn(
         note: number,
         velocity: number = 127,
-        checkPlayable = true,
+        playOnKeyboard = true,
+        markCorrect = false,
+        markWrong = false,
     ) {
-        if (checkPlayable && !playable) {
-            return;
-        }
         logs = [`Note ${note} was pressed!`, ...logs];
-        let positionInKeyPressed = noteToPositionInKey(rootNote, note);
-        if (positionInKey) {
-            if (!positionInKeyPressed) {
-                return;
+        MIDI.noteOn(0, note, velocity, 0);
+        if (playOnKeyboard) {
+            let key = midiToKey(note);
+            keyBindings[key]?.playKey();
+            if (markCorrect) {
+                keyBindings[key]?.markCorrect();
             }
-            if (positionInKeyPressed === positionInKey) {
-                keyBindings[midiToKey(note)]?.markCorrect();
-                positionInKey = undefined;
-            } else {
-                keyBindings[midiToKey(note)]?.markWrong();
+            if (markWrong) {
+                keyBindings[key]?.markWrong();
             }
         }
-        MIDI.noteOn(0, note, velocity, 0);
-        let key = midiToKey(note);
-        keyBindings[key]?.playKey();
     }
 
     function noteOff(note: number) {
@@ -186,8 +185,19 @@
         start: number,
         type: Chord = Chord.Major,
         inversion: Inversion = Inversion.Root,
+        playOnKeyboard = true,
+        markCorrect = false,
+        markWrong = false,
     ) {
-        chordOnOrOff(start, type, true, inversion);
+        chordOnOrOff(
+            start,
+            type,
+            true,
+            inversion,
+            playOnKeyboard,
+            markCorrect,
+            markWrong,
+        );
     }
 
     function chordOff(
@@ -203,52 +213,53 @@
         chordType: Chord,
         play: boolean,
         inversion: Inversion,
+        playOnKeyboard = true,
+        markCorrect = false,
+        markWrong = false,
     ) {
         let chordNotes = notesInChord(start, chordType, inversion);
         chordNotes.forEach((note) => {
             if (play) {
-                noteOn(note, 127, false);
+                noteOn(note, 127, playOnKeyboard, markCorrect, markWrong);
             } else {
                 noteOff(note);
             }
         });
     }
 
+    function getRandomChord(): Chord {
+        return Math.floor(Math.random() * chordTypes.length);
+    }
+
     async function playPattern(newNoteToGuess) {
-        playable = false;
-        const positionInKeyBefore = positionInKey;
-        positionInKey = undefined;
-        let hold = 500;
-        let pause = 100;
-        let chords = [
-            [0, Chord.Major, Inversion.Root],
-            [5 - 12, Chord.Major, Inversion.Second],
-            [7 - 12, Chord.Major, Inversion.First],
-            [0, Chord.Major, Inversion.Root],
-        ];
-        for (const [offset, chordType, inversion] of chords) {
-            chordOn(rootNote + offset, chordType, inversion);
-            await sleep(hold);
-            chordOff(rootNote + offset, chordType, inversion);
-            await sleep(pause);
-        }
-
-        await sleep(hold);
+        playing = true;
         if (newNoteToGuess) {
-            pickedN = Math.floor(Math.random() * 8);
-            positionInKey = pickedN + 1;
-            if (positionInKey === 8) {
-                positionInKey = 1;
-            }
-        } else {
-            positionInKey = positionInKeyBefore;
+            rootNote =
+                Math.floor(Math.random() * (maxRootRote - minRootNote)) +
+                minRootNote;
+            chordTypeToGuess = getRandomChord();
         }
-
-        let note = getNthNoteInKey(rootNote, pickedN);
-        MIDI.noteOn(0, note, 127, 0);
+        let hold = 500;
+        chordOn(rootNote, chordTypeToGuess, Inversion.Root, false);
         await sleep(hold);
-        MIDI.noteOff(0, note, 0);
-        playable = true;
+        chordOff(rootNote, chordTypeToGuess, Inversion.Root);
+        playing = false;
+    }
+
+    async function guessChordType(chordTypeString: string) {
+        let chordType = Chord[chordTypeString];
+        let hold = 500;
+        playing = true;
+
+        const correct = chordType == chordTypeToGuess;
+        chordOn(rootNote, chordType, Inversion.Root, true, correct, !correct);
+        await sleep(hold);
+        chordOff(rootNote, chordType, Inversion.Root);
+
+        if (correct) {
+            chordTypeToGuess = null;
+        }
+        playing = false;
     }
 </script>
 
@@ -256,8 +267,18 @@
 
 <label>
     Root Note
-    <input type="number" bind:value={rootNote} min="48" max="72" />
-    <input type="range" bind:value={rootNote} min="48" max="72" />
+    <input
+        type="number"
+        bind:value={rootNote}
+        min={minRootNote}
+        max={maxRootRote}
+    />
+    <input
+        type="range"
+        bind:value={rootNote}
+        min={minRootNote}
+        max={maxRootRote}
+    />
 </label>
 
 {#key rootNote}
@@ -271,24 +292,26 @@
                     on:notereleased={({ detail }) => noteOff(detail)}
                     pressed={keysPressed.includes(note)}
                     bind:this={keyBindings[midiToKey(note)]}
-                    numberInKey={noteToPositionInKey(rootNote, note)}
+                    numberInKey={noteToPositionInKey(rootNote, note) == 1
+                        ? 1
+                        : null}
                 />
             {/each}
         </div>
     </div>
 {/key}
 
-{#if !positionInKey && playable}
+{#if chordTypeToGuess == null}
     <button
         on:mousedown={async () => {
             await playPattern(true);
         }}
     >
-        Guess Note
+        Guess Chord
     </button>
 {/if}
 
-{#if positionInKey}
+{#if chordTypeToGuess != null && !playing}
     <button
         on:mousedown={async () => {
             await playPattern(false);
@@ -296,6 +319,15 @@
     >
         Replay
     </button>
+    {#each chordTypes as chordType}
+        <button
+            on:mousedown={async () => {
+                await guessChordType(chordType);
+            }}
+        >
+            {chordType}
+        </button>
+    {/each}
 {/if}
 
 {#if verbose}
