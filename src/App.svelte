@@ -1,7 +1,11 @@
 <script lang="ts">
-    import Keyboard from "./Keyboard.svelte";
+    import GuessInterval from "./GuessInterval.svelte";
+    import GuessNote from "./GuessNote.svelte";
     import Settings from "./Settings.svelte";
     import { octaves, verbose } from "./stores";
+
+    const modes = ["note", "interval"];
+    let selectedMode = modes[0];
 </script>
 
 <svelte:head>
@@ -15,8 +19,25 @@
     <Settings />
 </div>
 
+<h2>Mode</h2>
+{#each modes as mode}
+    <label>
+        <input
+            type="radio"
+            name="mode"
+            value={mode}
+            bind:group={selectedMode}
+        />
+        {mode}
+    </label>
+{/each}
+
 {#key $octaves}
-    <Keyboard octaves={$octaves} verbose={$verbose} />
+    {#if selectedMode == "note"}
+        <GuessNote octaves={$octaves} verbose={$verbose} />
+    {:else if selectedMode == "interval"}
+        <GuessInterval octaves={$octaves} verbose={$verbose} />
+    {/if}
 {/key}
 
 <style>
