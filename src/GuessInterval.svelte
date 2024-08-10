@@ -18,6 +18,7 @@
 
     let rootNote = 60;
     let positionInKey;
+    let pickedN;
     let playable = true;
 
     $: {
@@ -180,6 +181,35 @@
 
     let innerWidth: number;
     $: keyWidth = Math.min((innerWidth - 36 / octaves) / (octaves * 8), 56);
+
+    async function playPattern(newNoteToGuess) {
+        playable = false;
+        const positionInKeyBefore = positionInKey;
+        positionInKey = undefined;
+        let hold = 500;
+        let pause = 100;
+
+        noteOn(rootNote, 127, false);
+        await sleep(hold);
+        noteOff(rootNote);
+        await sleep(pause);
+
+        if (newNoteToGuess) {
+            pickedN = Math.floor(Math.random() * 8);
+            positionInKey = pickedN + 1;
+            if (positionInKey === 8) {
+                positionInKey = 1;
+            }
+        } else {
+            positionInKey = positionInKeyBefore;
+        }
+
+        let note = getNthNoteInKey(rootNote, pickedN);
+        MIDI.noteOn(0, note, 127, 0);
+        await sleep(hold);
+        MIDI.noteOff(0, note, 0);
+        playable = true;
+    }
 </script>
 
 <svelte:window bind:innerWidth />
@@ -208,32 +238,25 @@
     <input type="range" bind:value={rootNote} min="48" max="72" />
 </label>
 
-<button
-    on:mousedown={async () => {
-        playable = false;
-        positionInKey = undefined;
-        let hold = 500;
-        let pause = 100;
+{#if !positionInKey && playable}
+    <button
+        on:mousedown={async () => {
+            await playPattern(true);
+        }}
+    >
+        Guess Interval
+    </button>
+{/if}
 
-        noteOn(rootNote, 127, false);
-        await sleep(hold);
-        noteOff(rootNote);
-        await sleep(pause);
-
-        const n = Math.floor(Math.random() * 8);
-        positionInKey = n + 1;
-        if (positionInKey === 8) {
-            positionInKey = 1;
-        }
-        let note = getNthNoteInKey(rootNote, n);
-        MIDI.noteOn(0, note, 127, 0);
-        await sleep(hold);
-        MIDI.noteOff(0, note, 0);
-        playable = true;
-    }}
->
-    Guess Interval
-</button>
+{#if positionInKey}
+    <button
+        on:mousedown={async () => {
+            await playPattern(false);
+        }}
+    >
+        Replay
+    </button>
+{/if}
 
 {#if verbose}
     {#each logs as log}
