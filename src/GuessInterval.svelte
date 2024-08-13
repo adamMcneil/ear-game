@@ -16,10 +16,13 @@
 
     let notes;
 
+    let minRootNote = 48;
+    let maxRootRote = 72;
     let rootNote = 60;
     let positionInKey;
     let pickedN;
     let playable = true;
+    let randomRoot = false;
 
     $: {
         let start = 0;
@@ -186,6 +189,12 @@
         playable = false;
         const positionInKeyBefore = positionInKey;
         positionInKey = undefined;
+        if (newNoteToGuess && randomRoot) {
+            rootNote =
+                Math.floor(Math.random() * (maxRootRote - minRootNote)) +
+                minRootNote;
+        }
+
         let hold = 500;
         let pause = 100;
 
@@ -216,8 +225,23 @@
 
 <label>
     Root Note
-    <input type="number" bind:value={rootNote} min="48" max="72" />
-    <input type="range" bind:value={rootNote} min="48" max="72" />
+    <input
+        type="number"
+        bind:value={rootNote}
+        min={minRootNote}
+        max={maxRootRote}
+    />
+    <input
+        type="range"
+        bind:value={rootNote}
+        min={minRootNote}
+        max={maxRootRote}
+    />
+</label>
+
+<label>
+    Random Root
+    <input type="checkbox" bind:checked={randomRoot} />
 </label>
 
 {#key rootNote}

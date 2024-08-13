@@ -20,6 +20,7 @@
     let rootNote = 60;
     let chordTypeToGuess = null;
     let playing = false;
+    let randomRoot = true;
 
     const chordTypes = Object.values(Chord).filter(
         (value) => typeof value === "string",
@@ -234,10 +235,12 @@
     async function playPattern(newNoteToGuess) {
         playing = true;
         if (newNoteToGuess) {
-            rootNote =
-                Math.floor(Math.random() * (maxRootRote - minRootNote)) +
-                minRootNote;
             chordTypeToGuess = getRandomChord();
+            if (randomRoot) {
+                rootNote =
+                    Math.floor(Math.random() * (maxRootRote - minRootNote)) +
+                    minRootNote;
+            }
         }
         let hold = 500;
         chordOn(rootNote, chordTypeToGuess, Inversion.Root, false);
@@ -279,6 +282,11 @@
         min={minRootNote}
         max={maxRootRote}
     />
+</label>
+
+<label>
+    Random Root
+    <input type="checkbox" bind:checked={randomRoot} />
 </label>
 
 {#key rootNote}
