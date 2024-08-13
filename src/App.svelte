@@ -20,18 +20,14 @@
     <Settings />
 </div>
 
-<h2>Mode</h2>
-{#each modes as mode}
-    <label>
-        <input
-            type="radio"
-            name="mode"
-            value={mode}
-            bind:group={selectedMode}
-        />
-        {mode}
-    </label>
-{/each}
+<label>
+    Mode
+    <select bind:value={selectedMode}>
+        {#each modes as mode}
+            <option value={mode}>{mode}</option>
+        {/each}
+    </select>
+</label>
 
 {#key $octaves}
     {#if selectedMode == "note"}
