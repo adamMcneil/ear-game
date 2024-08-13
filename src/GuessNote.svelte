@@ -46,9 +46,9 @@
         }
         let octave = Math.floor(note / (12 * octaves));
         let offset = (note - rootNote) % (12 * octaves);
-        if (octave % (octaves + 1) == 0 && offset == 0) {
+        if (octave % (octaves + 1) == 0 && (offset == 0 || offset == 1)) {
             // need this because we add in 1 extra note of the one we start on
-            return 12 * octaves;
+            return 12 * octaves + offset;
         } else {
             return offset;
         }
