@@ -8,6 +8,7 @@
     import MIDI from "midi.js";
     import {
         Chord,
+        getNotesInKey,
         getNthNoteInKey,
         Inversion,
         notesInChord,
@@ -69,8 +70,35 @@
                 return;
             }
             if (positionInKeyPressed === positionInKey) {
-                keyBindings[midiToKey(note)]?.markCorrect();
                 positionInKey = undefined;
+                playable = false;
+
+                setTimeout(async () => {
+                    let notesInKey = getNotesInKey(rootNote);
+                    let notesToPlay: number[];
+                    if (positionInKeyPressed >= 5) {
+                        notesToPlay = notesInKey.slice(
+                            positionInKeyPressed - 1,
+                        );
+                    } else {
+                        notesToPlay = notesInKey.slice(0, positionInKeyPressed);
+                        notesToPlay.reverse();
+                    }
+                    if (notesToPlay.length == 1 && note != rootNote) {
+                        notesToPlay = [note];
+                    }
+                    let firstNote = true;
+                    for (const note of notesToPlay) {
+                        noteOn(note, 127, false);
+                        let time = firstNote ? 500 : 300;
+                        keyBindings[midiToKey(note)]?.markCorrect(time);
+                        await sleep(time);
+                        noteOff(note);
+                        firstNote = false;
+                    }
+                    playable = true;
+                }, 0);
+                return;
             } else {
                 keyBindings[midiToKey(note)]?.markWrong();
             }

@@ -32,13 +32,13 @@
         if (!pressed) return;
         pressed = false;
     }
-    export function markCorrect() {
+    export function markCorrect(timeout = 500) {
         correct = true;
-        setTimeout(() => (correct = false), 500);
+        setTimeout(() => (correct = false), timeout);
     }
-    export function markWrong() {
+    export function markWrong(timeout = 500) {
         wrong = true;
-        setTimeout(() => (wrong = false), 500);
+        setTimeout(() => (wrong = false), timeout);
     }
 </script>
 
