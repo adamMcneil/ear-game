@@ -6,13 +6,7 @@
     import Key from "./Key.svelte";
     import { onMount } from "svelte";
     import MIDI from "midi.js";
-    import {
-        Chord,
-        getNthNoteInKey,
-        Inversion,
-        notesInChord,
-        noteToPositionInKey,
-    } from "./chords";
+    import { getNthNoteInKey, noteToPositionInKey } from "./chords";
 
     let notes;
 
