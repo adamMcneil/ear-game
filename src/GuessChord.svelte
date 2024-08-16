@@ -25,6 +25,14 @@
     const chordTypes = Object.values(Chord).filter(
         (value) => typeof value === "string",
     );
+    const defaultChordsToInclude: Array<String> = [
+        Chord.Major,
+        Chord.Minor,
+        Chord.Seventh,
+    ].map((t) => Chord[t]);
+    let includeChordTypes: Array<boolean> = chordTypes.map((chordType) =>
+        defaultChordsToInclude.includes(chordType),
+    );
 
     $: {
         let start = 0;
@@ -229,13 +237,19 @@
     }
 
     function getRandomChord(): Chord {
-        return Math.floor(Math.random() * chordTypes.length);
+        let availableChords = chordTypes.filter((_, i) => includeChordTypes[i]);
+        return Chord[
+            availableChords[Math.floor(Math.random() * availableChords.length)]
+        ];
     }
 
-    async function playPattern(newNoteToGuess) {
+    async function playPattern(newChordToGuess) {
         playing = true;
-        if (newNoteToGuess) {
+        if (newChordToGuess) {
             chordTypeToGuess = getRandomChord();
+            if (chordTypeToGuess == null) {
+                return;
+            }
             if (randomRoot) {
                 rootNote =
                     Math.floor(Math.random() * (maxRootRote - minRootNote)) +
@@ -289,6 +303,17 @@
     <input type="checkbox" bind:checked={randomRoot} />
 </label>
 
+{#each chordTypes as chordType, i}
+    <label>
+        {chordType}
+        <input
+            type="checkbox"
+            bind:checked={includeChordTypes[i]}
+            on:change={() => (chordTypeToGuess = null)}
+        />
+    </label>
+{/each}
+
 {#key rootNote}
     <div class="keyboard">
         <div>
@@ -309,7 +334,7 @@
     </div>
 {/key}
 
-{#if chordTypeToGuess == null}
+{#if chordTypeToGuess == null && includeChordTypes.includes(true)}
     <button
         on:mousedown={async () => {
             await playPattern(true);
@@ -327,14 +352,16 @@
     >
         Replay
     </button>
-    {#each chordTypes as chordType}
-        <button
-            on:mousedown={async () => {
-                await guessChordType(chordType);
-            }}
-        >
-            {chordType}
-        </button>
+    {#each chordTypes as chordType, i}
+        {#if includeChordTypes[i]}
+            <button
+                on:mousedown={async () => {
+                    await guessChordType(chordType);
+                }}
+            >
+                {chordType}
+            </button>
+        {/if}
     {/each}
 {/if}
 

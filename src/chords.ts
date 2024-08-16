@@ -11,6 +11,8 @@ export function notesInChord(
             return seventhChordNotes(start, inversion);
         case Chord.MajorSeventh:
             return majorSeventhChordNotes(start, inversion);
+        case Chord.MinorSeventh:
+            return minorSeventhChordNotes(start, inversion);
         default:
             return [];
     }
@@ -52,6 +54,15 @@ export function majorSeventhChordNotes(
     return notes;
 }
 
+export function minorSeventhChordNotes(
+    start: number,
+    inversion: Inversion = Inversion.Root,
+) {
+    let notes = [start, start + 3, start + 7, start + 10];
+    applyInversion(notes, inversion);
+    return notes;
+}
+
 function applyInversion(notes, inversion: Inversion) {
     switch (inversion) {
         case Inversion.First:
@@ -69,6 +80,7 @@ export enum Chord {
     Minor,
     Seventh,
     MajorSeventh,
+    MinorSeventh,
 }
 
 export enum Inversion {
