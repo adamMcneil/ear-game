@@ -355,16 +355,3 @@
         <div>{log}</div>
     {/each}
 {/if}
-
-<style>
-    .keyboard {
-        display: flex;
-        justify-content: center;
-    }
-    .keyboard > div {
-        display: flex;
-        overflow: auto;
-        padding: 8px;
-        height: 192px;
-    }
-</style>

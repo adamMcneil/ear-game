@@ -244,6 +244,17 @@
     <input type="checkbox" bind:checked={randomRoot} />
 </label>
 
+<ol>
+    <li>Happy Birthday to You</li>
+    <li>Rudolph The Red-Nosed Reindeer</li>
+    <li>Oh when the Saints</li>
+    <li>Here Comes the Bride</li>
+    <li>Star Wars</li>
+    <li>It Came Upon a Midnight Clear</li>
+    <li>Willy Wonka (Pure Imagination)</li>
+    <li>Over the Rainbow</li>
+</ol>
+
 {#key rootNote}
     <div class="keyboard">
         <div>
@@ -287,16 +298,3 @@
         <div>{log}</div>
     {/each}
 {/if}
-
-<style>
-    .keyboard {
-        display: flex;
-        justify-content: center;
-    }
-    .keyboard > div {
-        display: flex;
-        overflow: auto;
-        padding: 8px;
-        height: 192px;
-    }
-</style>
